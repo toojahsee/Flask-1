@@ -21,13 +21,15 @@ window.onload = () => {
     e.preventDefault();
   }, { passive: false });
 
-  // 监听滑块调整棋盘大小
-  sizeRange.addEventListener('input', e => {
-    const size = e.target.value;
-    sizeValue.textContent = size;
-    boardEl.style.width = size + 'px';
-    board.resize();
-  });
+  // 监听滑块调整棋盘大小（可选功能）
+  if (sizeRange && sizeValue) {
+    sizeRange.addEventListener('input', e => {
+      const size = e.target.value;
+      sizeValue.textContent = size;
+      boardEl.style.width = size + 'px';
+      board.resize();
+    });
+  }
 };
 
 // 拖动走棋事件
@@ -44,36 +46,28 @@ function onSquareClick(square) {
   const piece = game.get(square);
 
   if (selectedSquare === null) {
-    // 没有选中棋子，点击己方棋子则选中
     if (piece && piece.color === game.turn()) {
       selectedSquare = square;
       highlightSquare(square);
     }
   } else {
     if (square === selectedSquare) {
-      // 点击同一格，取消选中
       selectedSquare = null;
       removeHighlight();
     } else {
-      // 尝试走棋
       const move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
       if (move === null) {
-        // 非法走法，尝试切换选中到新格（如果是己方棋子）
         if (piece && piece.color === game.turn()) {
           selectedSquare = square;
           highlightSquare(square);
         } else {
-          // 否则取消选中
           selectedSquare = null;
           removeHighlight();
         }
       } else {
-        // 走棋成功，更新棋盘并取消选中
         board.position(game.fen());
         selectedSquare = null;
         removeHighlight();
-
-        // AI回应
         setTimeout(makeAIMove, 250);
       }
     }
