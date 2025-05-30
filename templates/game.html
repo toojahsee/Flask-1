@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chess vs AI</title>
+  <link rel="stylesheet" href="/static/chessboard-1.0.0.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+    }
+    #board {
+      width: 400px;
+      margin: 20px auto;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>与AI对战国际象棋</h1>
+  <div id="board"></div>
+  <button id="saveBtn">保存游戏</button>
+
+  <!-- 引入库 -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="/static/chessboard-1.0.0.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stockfish@11.0.0/src/stockfish.js"></script>
+
+  <!-- 引入自定义游戏逻辑 -->
+  <script src="/static/script.js"></script>
+</body>
+</html>
