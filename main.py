@@ -3,12 +3,22 @@ import os
 import requests
 from flask_cors import CORS
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
-CORS(app)  # 允许跨域请求
+# 设置 Flask：静态文件路径为 /static，实际文件位于 scr/public_static
+app = Flask(
+    __name__,
+    static_url_path='/static',
+    static_folder='scr/public_static',
+    template_folder='scr'
+)
+CORS(app)
 
 @app.route('/')
 def index():
-    return render_template('game.html')
+    return render_template('index.html')  # 欢迎页面
+
+@app.route('/game')
+def game():
+    return render_template('game.html')  # 游戏页面
 
 @app.route('/move', methods=['POST'])
 def get_best_move():
@@ -28,8 +38,6 @@ def get_best_move():
             return jsonify({"error": "Stockfish API 返回失败"}), 500
 
         raw_bestmove = move_data.get("bestmove", "")
-
-        # 处理 bestmove 字符串，兼容多种格式
         move_parts = raw_bestmove.split()
         if len(move_parts) >= 2 and move_parts[0] == "bestmove":
             actual_move = move_parts[1]

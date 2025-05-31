@@ -1,12 +1,9 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  optimizeDeps: {
-    include: ['jquery']
-  },
+  root: 'scr', // 你的前端源码根目录
   build: {
-    commonjsOptions: {
-      include: [/node_modules/]
-    }
+    outDir: 'dist', // 改成 scr/dist，避免覆盖 public_static
+    emptyOutDir: true
   }
 });

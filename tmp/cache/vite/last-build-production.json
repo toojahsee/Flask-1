@@ -1,0 +1,7 @@
+{
+  "success": true,
+  "errors": "\u001b[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.\u001b[39m\n",
+  "timestamp": "2025-05-31 07:59:49",
+  "vite_ruby": "3.3.4",
+  "digest": "d690ec06af6572fc27ce3323bca2d93a2374bdc9"
+}
