@@ -3,22 +3,17 @@ import os
 import requests
 from flask_cors import CORS
 
-# 设置 Flask：静态文件路径为 /static，实际文件位于 scr/public_static
-app = Flask(
-    __name__,
-    static_url_path='/static',
-    static_folder='scr/public_static',
-    template_folder='scr'
-)
+# 使用 Flask 默认目录结构：templates/ 和 static/
+app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')  # 欢迎页面
+    return render_template('index.html')
 
 @app.route('/game')
 def game():
-    return render_template('game.html')  # 游戏页面
+    return render_template('game.html')
 
 @app.route('/move', methods=['POST'])
 def get_best_move():
@@ -31,7 +26,6 @@ def get_best_move():
             "depth": 15
         })
         res.raise_for_status()
-
         move_data = res.json()
 
         if not move_data.get("success", False):

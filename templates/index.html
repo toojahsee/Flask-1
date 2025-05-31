@@ -15,15 +15,29 @@
       font-size: 20px;
       cursor: pointer;
     }
+    select {
+      font-size: 18px;
+      padding: 8px 12px;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
   <h1>欢迎来到 Chess vs AI</h1>
+
+  <!-- 新增选择执棋方 -->
+  <select id="colorSelect">
+    <option value="white">白方</option>
+    <option value="black">黑方</option>
+  </select>
+  <br />
+
   <button id="startBtn">开始游戏</button>
 
   <script>
     document.getElementById('startBtn').addEventListener('click', function() {
-      window.location.href = '/game';  // 跳转到 /game 路由，显示棋盘
+      const color = document.getElementById('colorSelect').value;
+      window.location.href = `/game?color=${color}`;  // 带参数跳转
     });
   </script>
 </body>
