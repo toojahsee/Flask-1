@@ -25,17 +25,13 @@
   <div id="board"></div>
   <button id="saveBtn">保存游戏</button>
 
-  <!-- ✅ 第三方依赖（保持不变） -->
+  <!-- 引入库 -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="{{ url_for('static', filename='chessboard-1.0.0.js') }}"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stockfish@11.0.0/src/stockfish.js"></script>
 
-  <!-- ✅ 判断是否使用 Vite 构建后的 JS -->
-  {% if vite_script_js %}
-  <script type="module" src="{{ url_for('vite_static', filename=vite_script_js) }}"></script>
-  {% else %}
+  <!-- 自定义逻辑 -->
   <script src="{{ url_for('static', filename='script.js') }}"></script>
-  {% endif %}
 </body>
 </html>

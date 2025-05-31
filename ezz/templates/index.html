@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chess vs AI - 首页</title>
+  <style>
+    body {
+      text-align: center;
+      margin-top: 100px;
+      font-family: Arial, sans-serif;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    select {
+      font-size: 18px;
+      padding: 8px 12px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>欢迎来到 Chess vs AI</h1>
+
+  <!-- 新增选择执棋方 -->
+  <select id="colorSelect">
+    <option value="white">白方</option>
+    <option value="black">黑方</option>
+  </select>
+  <br />
+
+  <button id="startBtn">开始游戏</button>
+
+  <script>
+    document.getElementById('startBtn').addEventListener('click', function() {
+      const color = document.getElementById('colorSelect').value;
+      window.location.href = `/game?color=${color}`;  // 带参数跳转
+    });
+  </script>
+</body>
+</html>

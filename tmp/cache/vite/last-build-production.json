@@ -1,7 +1,7 @@
 {
-  "success": true,
-  "errors": "\u001b[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.\u001b[39m\n",
-  "timestamp": "2025-05-31 07:59:49",
+  "success": false,
+  "errors": "\u001b[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.\u001b[39m\n<script src=\"{{ url_for('static', filename='chessboard-1.0.0.js') }}\"> in \"/templates/game.html\" can't be bundled without type=\"module\" attribute\n<script src=\"{{ url_for('static', filename='script.js') }}\"> in \"/templates/game.html\" can't be bundled without type=\"module\" attribute\nfile:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:36310\n                            new Error(`Failed to resolve ${url} from ${id}`)\n                            ^\n\nError: Failed to resolve {{ url_for('vite_static', filename=vite_game_js) }} from /home/runner/workspace/templates/game.html\n    at file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:36310:29\n\nNode.js v20.18.1\n",
+  "timestamp": "2025-05-31 11:10:30",
   "vite_ruby": "3.3.4",
-  "digest": "d690ec06af6572fc27ce3323bca2d93a2374bdc9"
+  "digest": "d20e3f2fc6b91ab3eebe20ae06ae516b8dd27a57"
 }
