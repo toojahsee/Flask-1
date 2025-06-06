@@ -21,3 +21,4 @@ simple-websocket==1.1.0
 urllib3==2.4.0
 Werkzeug==3.0.0
 wsproto==1.2.0
+eventlet>=0.24.1
