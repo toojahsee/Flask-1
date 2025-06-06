@@ -9,7 +9,7 @@ export default defineConfig({
     assetsDir: 'assets',      // 静态资源目录
     rollupOptions: {
       input: {
-        game: resolve(__dirname, 'static/js/game.js'),
+        game: resolve(__dirname, 'static/js/game_online.js'),
         room: resolve(__dirname, 'static/js/room.js'),
         game_ai: resolve(__dirname, 'static/js/game_ai.js'),
         game_common: resolve(__dirname, 'static/js/game_common.js'),

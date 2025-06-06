@@ -1,4 +1,6 @@
-Flask
+flask
 flask-socketio
 eventlet
-flask-cors
+gunicorn
+requests
+python-dotenv

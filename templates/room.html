@@ -4,83 +4,170 @@
 <head>
   <meta charset="UTF-8" />
   <title>在线对战房间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 2em;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    input[type="text"] {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 100%;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #00c3ff;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #009acc;
+    }
+
+    #errorMsg {
+      background-color: rgba(255, 80, 80, 0.9);
+      color: white;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      display: none;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    audio {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <!-- Flash 消息提示 -->
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <ul style="color:red; list-style:none; padding:10px; background:#fee; border:1px solid red; max-width:400px; margin-bottom:20px;">
-        {% for msg in messages %}
-          <li>{{ msg }}</li>
-        {% endfor %}
-      </ul>
+
+  <!-- 背景音乐（循环播放） -->
+  <audio id="backgroundMusic" autoplay loop>
+    <source src="{{ url_for('static', filename='music/lobby.mp3') }}" type="audio/mpeg">
+    您的浏览器不支持音频播放。
+  </audio>
+
+  <div class="card">
+    <h1>加入或创建房间</h1>
+
+    {% if room_id and color %}
+      <p>你已加入房间：<strong>{{ room_id }}</strong></p>
+      <p>你的颜色：<strong>{{ color }}</strong></p>
     {% endif %}
-  {% endwith %}
 
-  <h1>加入或创建房间</h1>
-
-  <!-- 显示玩家信息 -->
-  {% if room_id and color %}
-    <p>你已加入房间：<strong>{{ room_id }}</strong></p>
-    <p>你的颜色：<strong>{{ color }}</strong></p>
-  {% endif %}
-
-  <!-- 房间号输入框 -->
-  <div id="join-section" {% if room_id and color %}style="display:none"{% endif %}>
-    <input type="text" id="roomInput" placeholder="请输入房间号" />
-    <button onclick="joinRoom()">加入房间</button>
+    <div id="join-section" {% if room_id and color %}style="display:none"{% endif %}>
+      <input type="text" id="roomInput" placeholder="请输入房间号" />
+      <button onclick="joinRoom()">加入房间</button>
+      <div id="errorMsg">错误信息</div>
+    </div>
   </div>
 
+  <!-- socket.io 客户端逻辑 -->
   <script>
     const socket = io();
 
-    // 先获取服务器传入的房间和颜色（如果有）
     const room = "{{ room_id or '' }}";
     const color = "{{ color or '' }}";
 
     if (room) {
       socket.emit("join_room", { room });
 
-      // 监听就绪事件：两人都加入房间
       socket.on("ready", () => {
         window.location.href = `/game?mode=online&room=${room}&color=${color}`;
       });
 
-      // 对手离开提示
       socket.on("opponent_left", () => {
         alert("对手离开房间。");
       });
     }
 
-    // 加入房间函数（点击按钮触发）
+    // 加入房间逻辑
     async function joinRoom() {
       const input = document.getElementById("roomInput");
+      const errorMsg = document.getElementById("errorMsg");
       const roomCode = input.value.trim().toUpperCase();
 
       if (!roomCode) {
-        alert('请输入房间码');
+        errorMsg.textContent = "请输入房间码";
+        errorMsg.style.display = "block";
         return;
       }
 
       try {
         const res = await fetch(`/check_room?room=${roomCode}`);
-        if (!res.ok) {
-          const err = await res.json();
-          alert(err.error || '加入房间失败');
+        const data = await res.json();
+
+        if (!res.ok || !data.room || data.player_count >= 2) {
+          errorMsg.textContent = "房间已满或不存在";
+          errorMsg.style.display = "block";
           return;
         }
 
-        // 这里可以接收data，但目前没用
-        const data = await res.json();
-
-        // 跳转到游戏页面（在线对战）
         window.location.href = `/game?mode=online&room=${roomCode}`;
       } catch (err) {
-        alert('网络错误或服务器未响应');
+        errorMsg.textContent = "网络错误，请稍后重试";
+        errorMsg.style.display = "block";
         console.error(err);
       }
     }
+
+    // 自动播放音乐（首次点击激活）
+    const bgMusic = document.getElementById("backgroundMusic");
+    document.addEventListener("click", () => {
+      if (bgMusic && bgMusic.paused) {
+        bgMusic.play().catch(() => {});
+      }
+    }, { once: true });
   </script>
 </body>
 </html>
