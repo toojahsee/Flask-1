@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>国际象棋（AI 模式）</title>
+
+  <!-- 棋盘样式 -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='chessboard-1.0.0.css') }}" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at center, #0f2027, #203a43, #2c5364);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    h1 {
+      margin: 30px 0 10px;
+      font-size: 2rem;
+      color: #00ffe7;
+      text-shadow: 0 0 10px #00ffe7;
+    }
+
+    #room-info {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: #ccc;
+    }
+
+    #status {
+      margin: 10px 0;
+      font-weight: bold;
+      color: #00ffd0;
+      font-size: 1.1rem;
+      text-shadow: 0 0 6px #00ffd0;
+    }
+
+    #board-container {
+      width: 600px;
+      height: 600px;
+      margin: 20px auto;
+      border: 2px solid #00ffe7;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 255, 231, 0.6);
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #board {
+      width: 100% !important;
+      height: 100% !important;
+      touch-action: none;
+    }
+
+    #restartBtn {
+      background: linear-gradient(145deg, #00ffc3, #005e6d);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ffc3;
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+    }
+
+    #restartBtn:hover {
+      background: linear-gradient(145deg, #00ffd5, #007c8b);
+      box-shadow: 0 0 20px #00ffd5;
+    }
+
+    @media (max-width: 600px) {
+      #board-container {
+        width: 100vw;
+        height: 100vw;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      #restartBtn {
+        font-size: 0.9rem;
+        padding: 8px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>国际象棋（AI 模式）</h1>
+  <div id="room-info">当前模式：单机对战 AI</div>
+  <div id="status">等待你开始对局...</div>
+
+  <div id="board-container">
+    <div id="board"></div>
+  </div>
+
+  <button id="restartBtn">重新开始</button>
+
+  <!-- 依赖脚本 -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{{ url_for('static', filename='chessboard-1.0.0.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+  <!-- 公共逻辑 -->
+  <script src="{{ url_for('static', filename='js/game_common.js') }}"></script>
+
+  <!-- 模板变量传参给 JS -->
+  <script>
+    const mode = "{{ mode }}";
+    const color = "{{ color }}";
+
+    localStorage.setItem('mode', mode);
+    localStorage.setItem('color', color);
+  </script>
+
+  <!-- AI 模式逻辑 -->
+  <script src="{{ url_for('static', filename='js/game_ai.js') }}"></script>
+</body>
+</html>

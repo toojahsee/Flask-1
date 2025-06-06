@@ -1,0 +1,86 @@
+<!-- templates/room.html -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>在线对战房间</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+  <!-- Flash 消息提示 -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul style="color:red; list-style:none; padding:10px; background:#fee; border:1px solid red; max-width:400px; margin-bottom:20px;">
+        {% for msg in messages %}
+          <li>{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <h1>加入或创建房间</h1>
+
+  <!-- 显示玩家信息 -->
+  {% if room_id and color %}
+    <p>你已加入房间：<strong>{{ room_id }}</strong></p>
+    <p>你的颜色：<strong>{{ color }}</strong></p>
+  {% endif %}
+
+  <!-- 房间号输入框 -->
+  <div id="join-section" {% if room_id and color %}style="display:none"{% endif %}>
+    <input type="text" id="roomInput" placeholder="请输入房间号" />
+    <button onclick="joinRoom()">加入房间</button>
+  </div>
+
+  <script>
+    const socket = io();
+
+    // 先获取服务器传入的房间和颜色（如果有）
+    const room = "{{ room_id or '' }}";
+    const color = "{{ color or '' }}";
+
+    if (room) {
+      socket.emit("join_room", { room });
+
+      // 监听就绪事件：两人都加入房间
+      socket.on("ready", () => {
+        window.location.href = `/game?mode=online&room=${room}&color=${color}`;
+      });
+
+      // 对手离开提示
+      socket.on("opponent_left", () => {
+        alert("对手离开房间。");
+      });
+    }
+
+    // 加入房间函数（点击按钮触发）
+    async function joinRoom() {
+      const input = document.getElementById("roomInput");
+      const roomCode = input.value.trim().toUpperCase();
+
+      if (!roomCode) {
+        alert('请输入房间码');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/check_room?room=${roomCode}`);
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.error || '加入房间失败');
+          return;
+        }
+
+        // 这里可以接收data，但目前没用
+        const data = await res.json();
+
+        // 跳转到游戏页面（在线对战）
+        window.location.href = `/game?mode=online&room=${roomCode}`;
+      } catch (err) {
+        alert('网络错误或服务器未响应');
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

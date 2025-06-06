@@ -1,4 +1,4 @@
-run =  ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+run = "python3 main.py"
 entrypoint = "main.py"
 modules = ["nodejs-20", "python-3.11"]
 
@@ -9,33 +9,13 @@ channel = "stable-24_05"
 packages = ["firebase-tools", "zammad"]
 
 [deployment]
-run =  ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+run = "python3 main.py"
 deploymentTarget = "cloudrun"
 
 [[ports]]
 localPort = 3000
-externalPort = 3000
-
-[[ports]]
-localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 9005
-externalPort = 3001
-
-[[ports]]
-localPort = 9006
-externalPort = 3002
-
-[[ports]]
-localPort = 9007
-externalPort = 3003
-
-[[ports]]
-localPort = 9008
-externalPort = 4200
-
-[[ports]]
-localPort = 9009
+localPort = 5000
 externalPort = 5000
