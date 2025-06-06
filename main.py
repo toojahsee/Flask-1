@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 import os
 import glob
 from flask import Flask, render_template, send_from_directory, request, redirect, flash, url_for, jsonify
