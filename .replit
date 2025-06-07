@@ -6,7 +6,7 @@ hidden = [".pythonlibs"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["firebase-tools", "zammad"]
+packages = ["firebase-tools", "iana-etc", "zammad"]
 
 [deployment]
 run = "python3 main.py"

@@ -4,9 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chess 对战模式选择</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
-
     * {
       box-sizing: border-box;
     }
@@ -14,167 +13,150 @@
     body {
       margin: 0;
       height: 100vh;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      background: #000;
       font-family: 'Orbitron', sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       color: #eee;
-      user-select: none;
+      overflow: hidden;
+      flex-direction: column;
+      padding: 20px;
     }
 
-    main.container {
-      background: rgba(10, 25, 45, 0.85);
-      padding: 40px 50px;
-      border-radius: 20px;
-      box-shadow:
-        0 0 10px #00f0ff88,
-        0 0 20px #00c8ffbb,
-        0 0 30px #00aaffdd,
-        0 0 40px #0099ffee;
-      width: 320px;
-      text-align: center;
-      transition: box-shadow 0.3s ease;
+    canvas#bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
     }
 
-    main.container:hover {
-      box-shadow:
-        0 0 15px #00ffffcc,
-        0 0 30px #00d4ffdd,
-        0 0 45px #00bfffdd,
-        0 0 60px #00bbffee;
-    }
-
-    h1 {
-      margin-bottom: 36px;
-      font-size: 1.8rem;
-      text-shadow:
-        0 0 5px #00bfff,
-        0 0 10px #00e0ff,
-        0 0 20px #00ffff;
-    }
+    /* 去除 container 样式，改为按钮的居中和美观 */
 
     form {
       display: flex;
       flex-direction: column;
       gap: 24px;
+      width: 340px;
+      max-width: 90vw;
     }
 
     label {
       font-size: 1.1rem;
-      letter-spacing: 1px;
-      display: block;
-      margin-bottom: 8px;
-      text-align: left;
       color: #00c8ff;
       text-shadow: 0 0 6px #00c8ffaa;
+      text-align: left;
     }
 
     select, input[type="text"] {
       padding: 10px 14px;
       font-size: 1rem;
       border-radius: 12px;
-      border: none;
+      border: 1.5px solid rgba(0, 224, 255, 0.5);
       outline: none;
-      background: #012f44;
+      background: rgba(0, 0, 0, 0.15);
       color: #a0e9ff;
-      box-shadow:
-        inset 0 0 5px #00c8ff99;
-      cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
+      box-shadow: none;
+      transition: all 0.35s ease;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
-    select {
-      background-image:
-        linear-gradient(45deg, transparent 50%, #00e0ff 50%),
-        linear-gradient(135deg, #00e0ff 50%, transparent 50%);
-      background-position:
-        calc(100% - 20px) calc(1em + 2px),
-        calc(100% - 15px) calc(1em + 2px);
-      background-size: 5px 5px;
-      background-repeat: no-repeat;
-    }
-
-    select:hover, select:focus,
-    input[type="text"]:hover, input[type="text"]:focus {
-      background: #024b70;
-      box-shadow:
-        inset 0 0 8px #00e0ffcc,
-        0 0 12px #00e0ff88;
+    select:hover, input[type="text"]:hover,
+    select:focus, input[type="text"]:focus {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: #00e0ffcc;
       color: #fff;
+      box-shadow: 0 0 12px #00e0ffcc;
     }
 
     button {
+      position: relative;
+      overflow: hidden;
       background: linear-gradient(90deg, #00d2ff, #3a47d5);
       border: none;
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 14px 0;
       font-size: 1.2rem;
-      font-weight: 700;
+      font-weight: bold;
       color: white;
-      letter-spacing: 1.4px;
+      letter-spacing: 1.5px;
       cursor: pointer;
-      box-shadow:
-        0 0 12px #00d2ff,
-        0 0 20px #2a3fbb;
-      transition: background 0.25s ease, box-shadow 0.25s ease;
-      user-select: none;
+      box-shadow: 0 0 15px #00e0ff, 0 0 30px #3377ee;
+      transition: all 0.3s ease;
+      width: 100%;
     }
 
-    button:hover, button:focus {
+    button:hover {
       background: linear-gradient(90deg, #3a47d5, #00d2ff);
-      box-shadow:
-        0 0 22px #00e0ff,
-        0 0 40px #3377ee;
-      outline: none;
+      transform: scale(1.04);
+      box-shadow: 0 0 25px #00ffff, 0 0 50px #33bbff;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      box-shadow: 0 0 15px #00bfff, 0 0 25px #0077aa;
+    }
+
+    button::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.3);
+      width: 200%;
+      height: 100%;
+      left: -100%;
+      top: 0;
+      transform: rotate(20deg);
+      transition: left 0.8s ease-in-out;
+      pointer-events: none;
+    }
+
+    button:hover::after {
+      left: 100%;
     }
 
     #roomDiv {
-      display: none;
-      margin-top: 12px;
+      overflow: hidden;
+      height: 0;
+      opacity: 0;
+      transition: all 0.5s ease;
     }
 
-    @media (max-width: 400px) {
-      main.container {
-        width: 90vw;
-        padding: 30px 25px;
-      }
+    #roomDiv.active {
+      height: auto;
+      opacity: 1;
+      margin-top: 12px;
     }
   </style>
 </head>
 <body>
-  <main class="container" role="main" aria-label="Chess对战模式和执棋方选择">
-    <h1>欢迎来到 Chess 对战</h1>
+  <canvas id="bg"></canvas>
 
-    <form id="modeForm">
-      <div>
-        <label for="modeSelect">对战模式：</label>
-        <select id="modeSelect" name="mode" required>
-          <option value="local">本地对战</option>
-          <option value="ai">人机对战</option>
-          <option value="online">联机对战</option>
-        </select>
-      </div>
+  <form id="modeForm" aria-label="Chess对战模式和执棋方选择">
+    <div>
+      <label for="modeSelect">对战模式：</label>
+      <select id="modeSelect" name="mode" required>
+        <option value="ai">人机对战</option>
+        <option value="online">联机对战</option>
+      </select>
+    </div>
 
-      <div>
-        <label for="colorSelect">执棋方：</label>
-        <select id="colorSelect" name="color" required>
-          <option value="white">白方</option>
-          <option value="black">黑方</option>
-        </select>
-      </div>
+    <div>
+      <label for="colorSelect">执棋方：</label>
+      <select id="colorSelect" name="color" required>
+        <option value="white">白方</option>
+        <option value="black">黑方</option>
+      </select>
+    </div>
 
-      <div id="roomDiv">
-        <label for="roomInput">房间号（联机对战必填）：</label>
-        <input id="roomInput" name="room" type="text" placeholder="请输入房间号" />
-      </div>
+    <div id="roomDiv">
+      <label for="roomInput">房间号（联机对战必填）：</label>
+      <input id="roomInput" name="room" type="text" placeholder="请输入房间号" />
+    </div>
 
-      <button type="submit">开始游戏</button>
-    </form>
-  </main>
+    <button type="submit">开始游戏</button>
+  </form>
 
   <script>
     const modeSelect = document.getElementById('modeSelect');
@@ -184,21 +166,20 @@
 
     function updateRoomInput() {
       if (modeSelect.value === 'online') {
-        roomDiv.style.display = 'block';
+        roomDiv.classList.add('active');
         roomInput.required = true;
       } else {
-        roomDiv.style.display = 'none';
+        roomDiv.classList.remove('active');
         roomInput.required = false;
         roomInput.value = '';
       }
     }
 
     modeSelect.addEventListener('change', updateRoomInput);
-    updateRoomInput(); // 初始化
+    updateRoomInput();
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-
       const mode = modeSelect.value;
       const color = document.getElementById('colorSelect').value;
       const room = roomInput.value.trim();
@@ -208,15 +189,72 @@
           alert('请输入房间号');
           return;
         }
-        // 跳转到 /room 页面，由后端处理房间逻辑
         window.location.href = `/room?mode=online&color=${encodeURIComponent(color)}&room=${encodeURIComponent(room)}`;
       } else if (mode === 'ai') {
-        // 跳转到 /game 路由，mode=ai 会渲染 game_ai.html
         window.location.href = `/game?mode=ai&color=${encodeURIComponent(color)}`;
-      } else if (mode === 'local') {
-        window.location.href = `/game?mode=local&color=${encodeURIComponent(color)}`;
       }
     });
+
+    // 粒子背景
+    const canvas = document.getElementById("bg");
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    function Particle() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = Math.random() * 0.6 - 0.3;
+      this.vy = Math.random() * 0.6 - 0.3;
+      this.radius = Math.random() * 1.5 + 0.5;
+      this.alpha = Math.random() * 0.6 + 0.3;
+    }
+
+    for (let i = 0; i < 100; i++) {
+      particles.push(new Particle());
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 255, 255, ${p.alpha})`;
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const q = particles[j];
+          const dx = p.x - q.x;
+          const dy = p.y - q.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(0, 255, 255, ${1 - dist / 100})`;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
+    draw();
   </script>
 </body>
 </html>
