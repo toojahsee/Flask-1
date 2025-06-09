@@ -1,12 +1,9 @@
-// game_online.js
-
 const socket = io();
 
-// 获取房间号，优先从 URL 参数，其次从 localStorage
+// 获取房间号
 const urlParams = new URLSearchParams(window.location.search);
 const room = urlParams.get("room") || localStorage.getItem("room");
 
-// 无效房间处理
 if (!room) {
   alert("无效房间，请返回主页重新进入。");
   window.location.href = "/";
@@ -18,38 +15,54 @@ let game = new Chess();
 let color = null;
 let isMyTurn = false;
 let gameStarted = false;
-let dropLock = false; // 防止 onDrop 多次触发
-
+let dropLock = false;
 window.boardInitialized = false;
 
-/**
- * 初始化棋盘
- * @param {string} playerColor - 'white' 或 'black'
- */
+// 从 HTML 获取音效和动画资源路径
+const lightningGifPath = document.getElementById('lightningGifPath')?.getAttribute('data-src') || '/static/img/effects/lightning.gif';
+const lightningAudioPath = document.getElementById('lightningAudioPath')?.getAttribute('data-src') || '/static/audio/lightning.mp3';
+
+const lightningAudio = new Audio(lightningAudioPath);
+lightningAudio.volume = 0.8;
+
+window.setDraggingState = function (isDragging) {
+  console.log("拖动状态：", isDragging);
+};
+
 function initBoard(playerColor) {
   if (window.boardInitialized) {
-    // 如果已经初始化，只切换棋盘方向和重置棋盘显示
     board.orientation(playerColor);
     board.position(game.fen());
     return;
   }
+
   board = Chessboard('board', {
     draggable: true,
     position: 'start',
     orientation: playerColor,
     onDrop: onDrop,
+    onDragStart: onDragStartWithGhost,
     moveSpeed: 'fast',
     snapbackSpeed: 100,
     snapSpeed: 80,
     pieceTheme: '/static/img/chesspieces/wikipedia/{piece}.png',
   });
+
   window.boardInitialized = true;
 }
 
-/**
- * 更新玩家状态显示
- * @param {Array} players - 玩家列表，包含 color 和 ready 属性
- */
+function onDragStartWithGhost(source, piece, position, orientation) {
+  window.setDraggingState?.(true);
+  const draggedPiece = document.querySelector('.chessboard-piece-being-dragged');
+  if (draggedPiece) {
+    const ghost = draggedPiece.cloneNode(true);
+    ghost.classList.add('ghost-piece');
+    ghost.style.opacity = '0.3';
+    ghost.style.pointerEvents = 'none';
+    draggedPiece.parentNode.appendChild(ghost);
+  }
+}
+
 function updatePlayerStatus(players = []) {
   const findPlayer = color => players.find(p => p.color === color);
   ['white', 'black'].forEach(c => {
@@ -66,9 +79,48 @@ function updatePlayerStatus(players = []) {
   });
 }
 
-/**
- * 更新游戏状态栏和按钮状态
- */
+function showCheckEffect() {
+  const kingSquare = findKingSquare(game, color);
+  if (!kingSquare) return;
+
+  const squareEl = document.querySelector(`.square-${kingSquare}`);
+  if (!squareEl) return;
+
+  const lightning = document.createElement('img');
+  lightning.src = lightningGifPath;
+  lightning.className = 'lightning-effect';
+  lightning.style.position = 'absolute';
+  lightning.style.top = '0';
+  lightning.style.left = '0';
+  lightning.style.width = '100%';
+  lightning.style.height = '100%';
+  lightning.style.zIndex = '9';
+  lightning.style.pointerEvents = 'none';
+
+  squareEl.appendChild(lightning);
+  lightningAudio.currentTime = 0;
+  lightningAudio.play();
+
+  setTimeout(() => {
+    lightning.remove();
+  }, 1000);
+}
+
+function findKingSquare(gameInstance, playerColor) {
+  const boardState = gameInstance.board();
+  for (let rank = 0; rank < 8; rank++) {
+    for (let file = 0; file < 8; file++) {
+      const piece = boardState[rank][file];
+      if (piece && piece.type === 'k' && piece.color === playerColor[0]) {
+        const fileChar = 'abcdefgh'[file];
+        const rankChar = (8 - rank).toString();
+        return fileChar + rankChar;
+      }
+    }
+  }
+  return null;
+}
+
 function updateStatus() {
   const statusEl = document.getElementById("status");
   if (!statusEl) return;
@@ -79,6 +131,9 @@ function updateStatus() {
     statusEl.textContent = "平局。";
   } else if (game.in_check()) {
     statusEl.textContent = isMyTurn ? "你的回合（被将军）" : "对方回合（你将军）";
+    if (isMyTurn) {
+      showCheckEffect();
+    }
   } else {
     statusEl.textContent = isMyTurn ? "你的回合" : "对方回合";
   }
@@ -89,41 +144,36 @@ function updateStatus() {
   }
 }
 
-/**
- * 下棋动作回调，防止重复触发，判断合法性并同步给服务器
- * @param {string} source 起始格
- * @param {string} target 目标格
- * @returns {string|undefined} 返回 'snapback' 表示非法走子回退
- */
 function onDrop(source, target) {
-  if (!gameStarted || !isMyTurn || game.game_over()) return 'snapback';
-
-  if (dropLock) return 'snapback'; // 防止多次触发
-  dropLock = true;
-
-  // 尝试走子
-  const move = game.move({ from: source, to: target, promotion: 'q' });
-  if (!move) {
-    dropLock = false; // 走子失败时释放锁
+  if (!gameStarted || !isMyTurn || game.game_over()) {
+    window.setDraggingState?.(false);
     return 'snapback';
   }
 
-  // 更新棋盘显示
-  board.position(game.fen());
+  if (dropLock) {
+    window.setDraggingState?.(false);
+    return 'snapback';
+  }
 
-  // 发送走子给服务器
+  dropLock = true;
+
+  const move = game.move({ from: source, to: target, promotion: 'q' });
+  if (!move) {
+    dropLock = false;
+    window.setDraggingState?.(false);
+    return 'snapback';
+  }
+
+  board.position(game.fen());
   socket.emit('move', { room, move });
 
   isMyTurn = false;
   updateStatus();
 
-  // 放开锁，允许下次走子
   setTimeout(() => { dropLock = false; }, 300);
-
-  return;
+  window.setDraggingState?.(false);
 }
 
-// socket 事件绑定和容错处理
 function setupSocketListeners() {
   socket.on("connect", () => {
     socket.emit('join', { room });
@@ -173,7 +223,6 @@ function setupSocketListeners() {
 
   socket.on('start', (data) => {
     initBoard(color);
-
     game.reset();
     board.start();
     gameStarted = true;
@@ -187,8 +236,6 @@ function setupSocketListeners() {
 
   socket.on('move', (data) => {
     if (!data || !data.move) return;
-
-    // 对方走子：用服务器数据走棋
     const moveResult = game.move(data.move);
     if (moveResult) {
       board.position(game.fen());
@@ -227,7 +274,6 @@ function setupSocketListeners() {
   });
 }
 
-// 绑定重新开始按钮事件
 function setupRestartButton() {
   const restartBtn = document.getElementById("restartBtn");
   if (!restartBtn) return;
@@ -245,7 +291,6 @@ function setupRestartButton() {
   });
 }
 
-// 初始化所有逻辑
 function main() {
   setupSocketListeners();
   setupRestartButton();
@@ -253,14 +298,7 @@ function main() {
 
 main();
 
-/**
- * 对外暴露初始化函数，用于外部调用，传入房间号
- * @param {string} roomId
- */
 function connectGame(roomId) {
-  // 可以加逻辑确认 roomId 与当前 room 是否一致，或者重新连接
-  // 这里只演示简单版
   console.log(`连接游戏，房间号：${roomId}`);
 }
-
 window.connectGame = connectGame;

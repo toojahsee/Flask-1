@@ -7,8 +7,7 @@
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <style>
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       font-family: "Helvetica Neue", sans-serif;
@@ -27,9 +26,27 @@
       z-index: 0;
     }
 
+    #code-rain {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      pointer-events: none;
+    }
+
+    canvas.code-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
     .card {
       position: relative;
-      z-index: 1;
+      z-index: 3;
       background: rgba(255, 255, 255, 0.1);
       padding: 30px;
       border-radius: 16px;
@@ -107,6 +124,7 @@
 </head>
 <body>
   <div id="three-bg"></div>
+  <div id="code-rain"><canvas class="code-canvas"></canvas></div>
 
   <audio id="backgroundMusic" autoplay loop>
     <source src="{{ url_for('static', filename='music/lobby.mp3') }}" type="audio/mpeg" />
@@ -130,96 +148,95 @@
   <script type="module">
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const container = document.getElementById("three-bg");
+    const container = document.getElementById("three-bg");
+    const codeRain = document.getElementById("code-rain");
 
-      // 场景、相机、渲染器初始化
-      const scene = new THREE.Scene();
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
 
-      const camera = new THREE.PerspectiveCamera(
-        60,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
-      camera.position.z = 5;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const starsGeometry = new THREE.BufferGeometry();
+    const positions = [];
+    for (let i = 0; i < 1000; i++) {
+      positions.push((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
+    }
+    starsGeometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, opacity: 0.8, transparent: true });
+    const starPoints = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(starPoints);
+
+    const sphereGeometry = new THREE.SphereGeometry(2, 64, 32);
+    const texture = new THREE.TextureLoader().load("/static/textures/your_texture.jpg");
+    const sphereMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7, metalness: 0.1 });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    scene.add(sphere);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(ambientLight, directionalLight);
+
+    // 球体自动移动
+    let triggerActivated = false;
+    function animate() {
+      requestAnimationFrame(animate);
+      starPoints.rotation.y += 0.0005;
+      sphere.rotation.z += 0.0003;
+      sphere.position.x += 0.01;
+
+      // 当球体到达 x > 3 位置，触发背景变化
+      if (sphere.position.x > 3 && !triggerActivated) {
+        triggerActivated = true;
+        showCodeRain();
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      container.appendChild(renderer.domElement);
-
-      // 星空粒子系统
-      const starCount = 1000;
-      const starsGeometry = new THREE.BufferGeometry();
-      const positions = [];
-
-      for (let i = 0; i < starCount; i++) {
-        const x = (Math.random() - 0.5) * 200;
-        const y = (Math.random() - 0.5) * 200;
-        const z = (Math.random() - 0.5) * 200;
-        positions.push(x, y, z);
-      }
-
-      starsGeometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(positions, 3)
-      );
-
-      const starsMaterial = new THREE.PointsMaterial({
-        color: 0xffffff,
-        size: 0.5,
-        sizeAttenuation: true,
-        transparent: true,
-        opacity: 0.8,
-      });
-
-      const starPoints = new THREE.Points(starsGeometry, starsMaterial);
-      scene.add(starPoints);
-
-      // 球体 — 使用贴图材质
-      const sphereGeometry = new THREE.SphereGeometry(2, 64, 32);
-
-      const textureLoader = new THREE.TextureLoader();
-      const texture = textureLoader.load('/static/textures/your_texture.jpg');
-
-      const sphereMaterial = new THREE.MeshStandardMaterial({
-        map: texture,
-        roughness: 0.7,
-        metalness: 0.1,
-      });
-
-      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-      scene.add(sphere);
-
-      // 光源设置
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(5, 5, 5);
-      scene.add(directionalLight);
-
-      // 动画函数
-      function animate() {
-        requestAnimationFrame(animate);
-
-        starPoints.rotation.y += 0.0005;
-
-        
-        sphere.rotation.z += 0.0003;
-
-        renderer.render(scene, camera);
-      }
-      animate();
-
-      // 窗口自适应
-      window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
     });
+
+    function showCodeRain() {
+      codeRain.style.display = "block";
+      const canvas = codeRain.querySelector(".code-canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const letters = "0101".split("");
+      const fontSize = 16;
+      const columns = canvas.width / fontSize;
+      const drops = Array(Math.floor(columns)).fill(1);
+
+      function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#0f0";
+        ctx.font = `${fontSize}px monospace`;
+
+        for (let i = 0; i < drops.length; i++) {
+          const text = letters[Math.floor(Math.random() * letters.length)];
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+          if (drops[i] * fontSize > canvas.height || Math.random() > 0.95) {
+            drops[i] = 0;
+          }
+          drops[i]++;
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      draw();
+    }
   </script>
 
   <script>
@@ -229,11 +246,9 @@
 
     if (room) {
       socket.emit("join_room", { room });
-
       socket.on("ready", () => {
         window.location.href = `/game?mode=online&room=${room}&color=${color}`;
       });
-
       socket.on("opponent_left", () => {
         alert("对手离开房间。");
       });
@@ -253,13 +268,11 @@
       try {
         const res = await fetch(`/check_room?room=${roomCode}`);
         const data = await res.json();
-
         if (!res.ok || !data.room || data.player_count >= 2) {
           errorMsg.textContent = "房间已满或不存在";
           errorMsg.style.display = "block";
           return;
         }
-
         window.location.href = `/game?mode=online&room=${roomCode}`;
       } catch (err) {
         errorMsg.textContent = "网络错误，请稍后重试";
@@ -269,15 +282,11 @@
     }
 
     const bgMusic = document.getElementById("backgroundMusic");
-    document.addEventListener(
-      "click",
-      () => {
-        if (bgMusic && bgMusic.paused) {
-          bgMusic.play().catch(() => {});
-        }
-      },
-      { once: true }
-    );
+    document.addEventListener("click", () => {
+      if (bgMusic && bgMusic.paused) {
+        bgMusic.play().catch(() => {});
+      }
+    }, { once: true });
   </script>
 </body>
 </html>

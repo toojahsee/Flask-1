@@ -4,172 +4,283 @@
   <meta charset="UTF-8" />
   <title>在线国际象棋对战</title>
 
-  <!-- 引入 Socket.IO -->
+  <!-- Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
-  <!-- 引入 jQuery -->
+  <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- 引入 chess.js -->
+  <!-- chess.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-  <!-- 引入 chessboard.js -->
+  <!-- chessboard.js -->
   <link rel="stylesheet" href="{{ url_for('static', filename='chessboard-1.0.0.css') }}">
   <script src="{{ url_for('static', filename='chessboard-1.0.0.js') }}"></script>
 
-  <!-- 自定义游戏逻辑脚本 -->
+  <!-- 自定义游戏逻辑 -->
   <script src="{{ url_for('static', filename='js/game_online.js') }}"></script>
 
   <style>
-    /* Reset & 基础字体 */
-    * {
-      box-sizing: border-box;
-    }
-    body {
+    html, body {
+      margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #1e1e2f;
       color: #e0e0e0;
-      margin: 0;
-      padding: 20px 10px;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      user-select: none; /* 防止意外选中文字 */
+      padding: 20px 10px;
+    }
+
+    #bg-canvas, #trail-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
     }
 
     h1 {
-      font-weight: 700;
       font-size: 2.4rem;
-      margin-bottom: 8px;
       color: #82aaff;
       text-shadow: 0 0 6px #528fff99;
     }
 
     #room-id {
-      font-weight: 600;
       color: #ffa726;
+      font-weight: bold;
     }
 
     .player-status {
       display: flex;
-      justify-content: center;
       gap: 60px;
-      margin: 18px 0 25px;
+      margin: 18px 0 28px;
       font-size: 1.1rem;
       font-weight: 600;
+      user-select: none;
+      z-index: 3;
     }
 
     .player-status > div {
-      min-width: 120px;
-      padding: 10px 14px;
-      border-radius: 10px;
+      padding: 10px 18px;
+      border-radius: 14px;
       background: #2e2e4f;
-      box-shadow: 0 0 10px #000a, inset 0 0 6px #0008;
-      transition: background-color 0.3s;
+      box-shadow: 0 0 12px #000a;
+      min-width: 120px;
+      text-align: center;
     }
 
-    /* 不同状态颜色 */
-    #white-status {
-      color: #fff;
-    }
-    #black-status {
-      color: #fff;
-    }
-    #white-status.ready {
-      color: #7bd671;
-      font-weight: 700;
-    }
+    #white-status.ready,
     #black-status.ready {
       color: #7bd671;
-      font-weight: 700;
     }
 
-    /* 棋盘容器固定大小，居中 */
+    #board-container {
+      transform-origin: center center;
+      transition: transform 0.25s ease;
+    }
+
     #board {
-      width: 400px;
-      height: 400px;
-      border: 3px solid #528fff;
-      border-radius: 15px;
-      box-shadow: 0 0 30px #528fff88;
-      background: #1a1a3d;
-      margin: 0 auto 30px;
-      touch-action: none; /* 禁止触控缩放拖动，防止误操作 */
+      width: 420px;
+      height: 420px;
+      max-width: 90vw;
+      max-height: 90vw;
+      background: linear-gradient(145deg, #23234d, #1c1c3b);
+      border: 6px solid #5a8dff;
+      border-radius: 18px;
+      box-shadow: 0 0 40px rgba(90, 141, 255, 0.6),
+                  inset 0 0 10px #2a2a5f;
+      position: relative;
+      z-index: 2;
+      user-select: none;
+      touch-action: none;
     }
 
-    /* 状态栏 */
     #status {
       font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 18px;
+      margin: 24px 0 28px 0;
       color: #ffa726;
-      min-height: 26px;
       text-shadow: 0 0 4px #ffb74daa;
+      user-select: none;
+      z-index: 3;
     }
 
-    /* 重新开始按钮 */
-    #restartBtn {
-      padding: 12px 26px;
+    #restartBtn, .zoom-btn {
+      padding: 12px 28px;
       font-size: 1.1rem;
-      font-weight: 700;
+      margin: 6px;
       background: #528fff;
       color: white;
       border: none;
-      border-radius: 14px;
-      box-shadow: 0 4px 14px #528fffaa;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px #528fffaa;
       cursor: pointer;
-      transition: background-color 0.25s ease, box-shadow 0.25s ease;
-      user-select: none;
-    }
-    #restartBtn:disabled {
-      background: #435d9b;
-      cursor: not-allowed;
-      box-shadow: none;
-      opacity: 0.6;
-    }
-    #restartBtn:not(:disabled):hover {
-      background: #4169e1;
-      box-shadow: 0 6px 18px #4169e1cc;
+      transition: background-color 0.3s ease;
+      z-index: 3;
     }
 
-    /* 响应式小屏幕适配 */
+    #restartBtn:hover:not(:disabled),
+    .zoom-btn:hover {
+      background: #6ea4ff;
+    }
+
+    #restartBtn:disabled {
+      background: #435d9b;
+      opacity: 0.6;
+      cursor: default;
+    }
+
     @media (max-width: 440px) {
       #board {
         width: 320px;
         height: 320px;
       }
-      .player-status {
-        flex-direction: column;
-        gap: 12px;
-        font-size: 1rem;
-      }
-      #restartBtn {
-        width: 100%;
-      }
     }
   </style>
 </head>
 <body>
+  <canvas id="bg-canvas"></canvas>
+  <canvas id="trail-canvas"></canvas>
+
   <h1>在线国际象棋对战</h1>
   <p>房间号：<span id="room-id">-</span></p>
 
   <div class="player-status">
-    <div>白方：<span id="white-status" class="">等待中...</span></div>
-    <div>黑方：<span id="black-status" class="">等待中...</span></div>
+    <div>白方：<span id="white-status">等待中...</span></div>
+    <div>黑方：<span id="black-status">等待中...</span></div>
   </div>
 
-  <div id="board"></div>
+  <div id="board-container">
+    <div id="board"></div>
+  </div>
 
   <div id="status">正在连接服务器...</div>
 
-  <button id="restartBtn" disabled>重新开始游戏</button>
+  <div>
+    <button class="zoom-btn" onclick="changeZoom(-0.1)">－缩小</button>
+    <button class="zoom-btn" onclick="changeZoom(0.1)">＋放大</button>
+    <button id="restartBtn" disabled>重新开始游戏</button>
+  </div>
+
+  <!-- 特效资源路径 -->
+  <div id="lightningGifPath" data-src="{{ url_for('static', filename='img/effects/lightning.gif') }}" hidden></div>
+  <div id="lightningAudioPath" data-src="{{ url_for('static', filename='audio/lightning.mp3') }}" hidden></div>
 
   <script>
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    const trailCanvas = document.getElementById('trail-canvas');
+    const trailCtx = trailCanvas.getContext('2d');
+    let width, height;
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      trailCanvas.width = width;
+      trailCanvas.height = height;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const particles = [];
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5),
+        vy: (Math.random() - 0.5),
+        radius: Math.random() * 2 + 1,
+      });
+    }
+
+    function animateBackground() {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#82aaff';
+        ctx.fill();
+      });
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(130,170,255,${1 - dist / 100})`;
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(animateBackground);
+    }
+
+    animateBackground();
+
+    const trail = [];
+    function drawTrail() {
+      trailCtx.clearRect(0, 0, width, height);
+      for (let i = 0; i < trail.length; i++) {
+        const t = trail[i];
+        trailCtx.beginPath();
+        trailCtx.arc(t.x, t.y, 8, 0, Math.PI * 2);
+        trailCtx.fillStyle = `rgba(255, 255, 255, ${t.alpha})`;
+        trailCtx.fill();
+        t.alpha -= 0.02;
+      }
+      while (trail.length > 0 && trail[0].alpha <= 0) {
+        trail.shift();
+      }
+      requestAnimationFrame(drawTrail);
+    }
+
+    drawTrail();
+
+    // 防止移动端滑动误触
+    document.addEventListener('touchmove', function (e) {
+      if (e.target.closest('#board')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // 缩放功能
+    let scale = 1.0;
+    let isDraggingPiece = false;
+
+    function changeZoom(delta) {
+      if (isDraggingPiece) return; // 拖拽时不缩放
+      scale = Math.min(1.6, Math.max(0.8, scale + delta));
+      document.getElementById('board-container').style.transform = `scale(${scale})`;
+    }
+
+    // 与 game_online.js 的拖拽事件结合，建议在拖拽开始/结束中设置 isDraggingPiece 变量
+    window.setDraggingState = (dragging) => {
+      isDraggingPiece = dragging;
+    };
+
     window.onload = function () {
       const urlParams = new URLSearchParams(window.location.search);
       const room = urlParams.get('room') || 'default';
       document.getElementById('room-id').textContent = room;
-
       if (typeof connectGame === 'function') {
         connectGame(room);
       } else {
